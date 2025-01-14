@@ -1,40 +1,39 @@
 import sys
-from collections import deque
 
 def main():
-    
     if len(sys.argv) != 5:
         print("Uso: python3 simulador.py <tamanho_cache> <tamanho_linha> <tamanho_grupo> <arquivo_entrada>")
         return
 
-    tamanho_cache = int(sys.argv[1])
-    tamanho_linha = int(sys.argv[2])
-    tamanho_grupo = int(sys.argv[3])
+    tamCache = int(sys.argv[1])
+    tamLinha = int(sys.argv[2])
+    tamGrupo = int(sys.argv[3])
     arquivo_entrada = sys.argv[4]
 
     # Verificações básicas
-    if tamanho_cache % tamanho_linha != 0:
+    if tamCache % tamLinha != 0:
         print("Erro: O tamanho da cache deve ser múltiplo do tamanho de cada linha.")
         return
 
-    if tamanho_grupo <= 0:
+    if tamGrupo <= 0:
         print("Erro: O tamanho do grupo deve ser maior que zero.")
         return
 
     # Configurações da cache
-    num_linhas = tamanho_cache // tamanho_linha
-    num_conjuntos = num_linhas // tamanho_grupo
+    numLinhas = tamCache // tamLinha
+    numConjuntos = numLinhas // tamGrupo
 
-    # Inicializa a cache como uma lista de deques (para FIFO)
-    cache = [deque(maxlen=tamanho_grupo) for _ in range(num_conjuntos)]
+    # Inicializa a cache como uma lista de listas
+    cache = [[None] * tamGrupo for _ in range(numConjuntos)]
+    ponteiros = [0] * numConjuntos  # Ponteiros para substituição circular
 
     # Estatísticas
     hits = 0
     misses = 0
 
     try:
-        with open(arquivo_entrada, 'r') as f:
-            acessos = [int(linha.strip(), 16) for linha in f if linha.strip().startswith("0x") and len(linha.strip()) == 10]
+        with open(arquivo_entrada, 'r') as fonte:
+            acessos = [int(linha.strip(), 16) for linha in fonte]
     except FileNotFoundError:
         print(f"Erro: Arquivo {arquivo_entrada} não encontrado.")
         return
@@ -43,33 +42,36 @@ def main():
         return
 
     # Abrir o arquivo de saída
-    with open("output.txt", "w") as output:
+    with open("output.txt", "w") as saida:
         for endereco in acessos:
-            bloco = endereco // tamanho_linha
-            conjunto_idx = bloco % num_conjuntos
-
+            bloco = endereco // tamLinha
+            conjunto_idx = bloco % numConjuntos
             conjunto = cache[conjunto_idx]
 
             if bloco in conjunto:
                 hits += 1
             else:
                 misses += 1
-                conjunto.append(bloco)
+                posicao = ponteiros[conjunto_idx]
+                conjunto[posicao] = bloco  # Substitui na posição do ponteiro
+                ponteiros[conjunto_idx] = (posicao + 1) % tamGrupo  # Avança o ponteiro circular
 
             # Estado atual da cache
-            output.write("================\n")
-            output.write("IDX V ** ADDR **\n")
-            for idx, line in enumerate(cache):
-                for bloco_cache in line:
-                    bloco_formatado = f"0x{bloco_cache:08X}"
-                    output.write(f"{idx:03d} 1 {bloco_formatado}\n")
-                if len(line) < tamanho_grupo:
-                    for _ in range(tamanho_grupo - len(line)):
-                        output.write(f"{idx:03d} 0\n")
+            saida.write("================\n")
+            saida.write("IDX V * ADDR *\n")
+            for idx, linha in enumerate(cache):
+                for i in range(tamGrupo):
+                    bloco_cache = linha[i]
+                    if bloco_cache is not None:
+                        bloco_formatado = f"0x{bloco_cache:08X}"
+                        saida.write(f"{idx * tamGrupo + i:03d} 1 {bloco_formatado}\n")
+                    else:
+                        saida.write(f"{idx * tamGrupo + i:03d} 0\n")
 
         # Resultados finais
-        output.write(f"#hits: {hits}\n")
-        output.write(f"#miss: {misses}\n")
+        saida.write("\n")
+        saida.write(f"#hits: {hits}\n")
+        saida.write(f"#miss: {misses}\n")
 
 if __name__ == "__main__":
     main()
