@@ -44,16 +44,16 @@ def main():
     # Abrir o arquivo de saída
     with open("output.txt", "w") as saida:
         for endereco in dados:
-            bloco = endereco // tamLinha
-            conjunto_id = bloco % numConjuntos
-            enderecoMEM = bloco // numConjuntos
-            conjunto = cache[conjunto_id]
+            bloco = endereco // tamLinha # remove os bits de acordo com o tamanho da linha
+            conjunto_id = bloco % numConjuntos # id do conjunto
+            enderecoMEM = bloco // numConjuntos # remove os bits de id do cojunto
+            conjunto = cache[conjunto_id] # seleciona o conjunto a ser inserido
 
             if enderecoMEM in conjunto:
                 hits += 1
             else:
                 misses += 1
-                posicao = ponteiros[conjunto_id]
+                posicao = ponteiros[conjunto_id] # qual linha sera utilizada
                 conjunto[posicao] = enderecoMEM  # Substitui na posição do ponteiro
                 ponteiros[conjunto_id] = (posicao + 1) % tamGrupo  # Avança o ponteiro circular
 
