@@ -33,7 +33,7 @@ def main():
 
     try:
         with open(arquivo_entrada, 'r') as fonte:
-            acessos = [int(linha.strip(), 16) for linha in fonte]
+            dados = [int(linha.strip(), 16) for linha in fonte]
     except FileNotFoundError:
         print(f"Erro: Arquivo {arquivo_entrada} não encontrado.")
         return
@@ -43,18 +43,19 @@ def main():
 
     # Abrir o arquivo de saída
     with open("output.txt", "w") as saida:
-        for endereco in acessos:
+        for endereco in dados:
             bloco = endereco // tamLinha
-            conjunto_idx = bloco % numConjuntos
-            conjunto = cache[conjunto_idx]
+            conjunto_id = bloco % numConjuntos
+            enderecoMEM = bloco // numConjuntos
+            conjunto = cache[conjunto_id]
 
-            if bloco in conjunto:
+            if enderecoMEM in conjunto:
                 hits += 1
             else:
                 misses += 1
-                posicao = ponteiros[conjunto_idx]
-                conjunto[posicao] = bloco  # Substitui na posição do ponteiro
-                ponteiros[conjunto_idx] = (posicao + 1) % tamGrupo  # Avança o ponteiro circular
+                posicao = ponteiros[conjunto_id]
+                conjunto[posicao] = enderecoMEM  # Substitui na posição do ponteiro
+                ponteiros[conjunto_id] = (posicao + 1) % tamGrupo  # Avança o ponteiro circular
 
             # Estado atual da cache
             saida.write("================\n")
