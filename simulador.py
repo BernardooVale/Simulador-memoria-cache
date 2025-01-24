@@ -65,7 +65,7 @@ def main():
 
                 # Estado atual da cache
                 saida.write("================\n")
-                saida.write("IDX V * ADDR *\n")
+                saida.write("IDX V ** ADDR **\n")
                 for idx, linha in enumerate(cache):
                     for i in range(tamGrupo):
                         bloco_cache = linha[i]
