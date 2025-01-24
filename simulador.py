@@ -5,9 +5,14 @@ def main():
         print("Uso: python3 simulador.py <tamanho_cache> <tamanho_linha> <tamanho_grupo> <arquivo_entrada>")
         return
 
-    tamCache = int(sys.argv[1])
-    tamLinha = int(sys.argv[2])
-    tamGrupo = int(sys.argv[3])
+    try:
+        tamCache = int(sys.argv[1])
+        tamLinha = int(sys.argv[2])
+        tamGrupo = int(sys.argv[3])
+    except ValueError:
+        print("Erro: Os tamanhos da cache, linha e grupo devem ser números inteiros.")
+        return
+    
     arquivo_entrada = sys.argv[4]
 
     # Verificações básicas
@@ -42,37 +47,42 @@ def main():
         return
 
     # Abrir o arquivo de saída
-    with open("output.txt", "w") as saida:
-        for endereco in dados:
-            bloco = endereco // tamLinha # remove os bits de acordo com o tamanho da linha
-            conjunto_id = bloco % numConjuntos # id do conjunto
-            enderecoMEM = bloco // numConjuntos # remove os bits de id do cojunto
-            conjunto = cache[conjunto_id] # seleciona o conjunto a ser inserido
+    try:
+        with open("output.txt", "w") as saida:
+            for endereco in dados:
+                bloco = endereco // tamLinha # remove os bits de acordo com o tamanho da linha
+                conjunto_id = bloco % numConjuntos # id do conjunto
+                enderecoMEM = bloco // numConjuntos # remove os bits de id do cojunto
+                conjunto = cache[conjunto_id] # seleciona o conjunto a ser inserido
 
-            if enderecoMEM in conjunto:
-                hits += 1
-            else:
-                misses += 1
-                posicao = ponteiros[conjunto_id] # qual linha sera utilizada
-                conjunto[posicao] = enderecoMEM  # Substitui na posição do ponteiro
-                ponteiros[conjunto_id] = (posicao + 1) % tamGrupo  # Avança o ponteiro circular
+                if enderecoMEM in conjunto:
+                    hits += 1
+                else:
+                    misses += 1
+                    posicao = ponteiros[conjunto_id] # qual linha sera utilizada
+                    conjunto[posicao] = enderecoMEM  # Substitui na posição do ponteiro
+                    ponteiros[conjunto_id] = (posicao + 1) % tamGrupo  # Avança o ponteiro circular
 
-            # Estado atual da cache
-            saida.write("================\n")
-            saida.write("IDX V * ADDR *\n")
-            for idx, linha in enumerate(cache):
-                for i in range(tamGrupo):
-                    bloco_cache = linha[i]
-                    if bloco_cache is not None:
-                        bloco_formatado = f"0x{bloco_cache:08X}"
-                        saida.write(f"{idx * tamGrupo + i:03d} 1 {bloco_formatado}\n")
-                    else:
-                        saida.write(f"{idx * tamGrupo + i:03d} 0\n")
+                # Estado atual da cache
+                saida.write("================\n")
+                saida.write("IDX V ** ADDR **\n")
+                for idx, linha in enumerate(cache):
+                    for i in range(tamGrupo):
+                        bloco_cache = linha[i]
+                        if bloco_cache is not None:
+                            bloco_formatado = f"0x{bloco_cache:08X}"
+                            saida.write(f"{idx * tamGrupo + i:03d} 1 {bloco_formatado}\n")
+                        else:
+                            saida.write(f"{idx * tamGrupo + i:03d} 0\n")
 
-        # Resultados finais
-        saida.write("\n")
-        saida.write(f"#hits: {hits}\n")
-        saida.write(f"#miss: {misses}\n")
+            # Resultados finais
+            saida.write("\n")
+            saida.write(f"#hits: {hits}\n")
+            saida.write(f"#miss: {misses}\n")
+            
+    except IOError:
+        print("Erro: Não foi possível escrever no arquivo de saída.")
+        return
 
 if __name__ == "__main__":
     main()
